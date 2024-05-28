@@ -1,0 +1,42 @@
+version: '3'
+services:
+  postgres:
+    user: 1001:1001
+    image: elestio/postgres:${SOFTWARE_VERSION_TAG}
+    shm_size: 1g
+    restart: always
+    command: |
+      bash -c "
+        rm -rf /var/lib/postgresql/data/*
+        echo 'Starting pg_basebackup...'
+        until pg_basebackup --pgdata=/var/lib/postgresql/data -R --slot=${REPLICATION_SLOT_NAME} --host=${PRIMARY_HOST} --port=5432
+        do
+        echo 'Waiting for primary to connect...'
+        sleep 1s
+        done
+        echo 'Backup done, starting replica...'
+        chmod 0700 /var/lib/postgresql/data
+        exec postgres -c cluster_name=${CLUSTER_NAME}
+      "
+    # postgres -c ssl=on -c ssl_cert_file=/var/lib/postgresql/data/server.crt -c ssl_key_file=/var/lib/postgresql/data/server.key
+    environment:
+      PGUSER: ${REPLICATION_USER}
+      PGPASSWORD: ${REPLICATION_PASSWORD}
+      PGDATA: /var/lib/postgresql/data
+      TS_TUNE_MAX_CONNS: 100
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+
+  pgadmin:
+    image: elestio/pgadmin:latest
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${ADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${ADMIN_PASSWORD}
+      PGADMIN_LISTEN_PORT: 8080
+    ports:
+      - '172.17.0.1:8080:8080'
+    volumes:
+      - ./servers.json:/pgadmin4/servers.json
