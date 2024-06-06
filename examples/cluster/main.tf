@@ -61,13 +61,13 @@ module "cluster" {
 
   replicas = [
     {
-      server_name   = "pg-replica-02"
+      server_name   = "pg-replica-01"
       provider_name = "hetzner"
       datacenter    = "fsn1"
       server_type   = "SMALL-1C-2G"
     },
     {
-      server_name   = "pg-replica-01"
+      server_name   = "pg-replica-02"
       provider_name = "hetzner"
       datacenter    = "fsn1"
       server_type   = "SMALL-1C-2G"

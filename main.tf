@@ -100,7 +100,7 @@ resource "null_resource" "primary_configuration" {
       "echo 'Starting the primary node...'",
       "cd /opt/app",
       "docker-compose up -d",
-      "sleep 10",
+      "sleep 20",
       "echo 'Primary node is started.'",
     ]
   }

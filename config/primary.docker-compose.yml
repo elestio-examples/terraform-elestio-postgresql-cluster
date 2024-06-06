@@ -1,12 +1,10 @@
 version: '3'
 services:
   postgres:
-    user: 1001:1001
     image: elestio/postgres:${SOFTWARE_VERSION_TAG}
     shm_size: 1g
     restart: always
     command: |
-      postgres
       -c wal_level=replica 
       -c hot_standby=on 
       -c max_wal_senders=10 
@@ -22,7 +20,7 @@ services:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${SOFTWARE_PASSWORD}
-      PGDATA: /var/lib/postgresql/data
+      PGDATA: /var/lib/postgresql/data/pgdata
       TS_TUNE_MAX_CONNS: 100
       POSTGRES_HOST_AUTH_METHOD: "scram-sha-256\nhost replication all 0.0.0.0/0 md5"
       POSTGRES_INITDB_ARGS: '--auth-host=scram-sha-256'
@@ -43,4 +41,3 @@ services:
       - '172.17.0.1:8080:8080'
     volumes:
       - ./servers.json:/pgadmin4/servers.json
-      - ./pgadmin:/var/lib/pgadmin

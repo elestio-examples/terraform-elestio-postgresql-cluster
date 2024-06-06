@@ -1,1 +1,10 @@
-create user replicator with replication encrypted password '${replication_password}';
+-- Start a transaction
+BEGIN;
+
+-- Set synchronous commit to off for this transaction
+SET LOCAL synchronous_commit TO OFF;
+
+CREATE USER replicator WITH REPLICATION ENCRYPTED PASSWORD '${replication_password}';
+
+-- Commit the transaction
+COMMIT;
