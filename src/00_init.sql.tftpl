@@ -1,0 +1,29 @@
+-- Start a transaction
+BEGIN;
+
+-- Set synchronous commit to off for this transaction
+SET LOCAL synchronous_commit TO OFF;
+
+CREATE USER ${replication_user} WITH REPLICATION ENCRYPTED PASSWORD '${replication_password}';
+
+CREATE OR REPLACE FUNCTION create_physical_replication_slot_if_not_exists(p_slot_name text)
+RETURNS void AS $$
+DECLARE
+    slot_exists boolean;
+BEGIN
+    -- Check if the slot already exists
+    SELECT EXISTS (
+        SELECT 1
+        FROM pg_replication_slots
+        WHERE slot_name = p_slot_name
+    ) INTO slot_exists;
+    
+    -- Create the slot if it doesn't exist
+    IF NOT slot_exists THEN
+        PERFORM pg_create_physical_replication_slot(p_slot_name);
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Commit the transaction
+COMMIT;

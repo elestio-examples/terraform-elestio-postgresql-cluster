@@ -2,6 +2,6 @@
 
 - [x] primary/replicas config
 - [x] replica can be async or sync
-- [ ] failover
+- [x] failover
 - [ ] ssl
 - [ ] documentation

@@ -21,7 +21,8 @@ variable "postgresql_replication_password" {
 terraform {
   required_providers {
     elestio = {
-      source = "elestio/elestio"
+      source  = "elestio/elestio"
+      version = ">= 0.18.0"
     }
   }
 }
@@ -48,29 +49,29 @@ module "cluster" {
 
   postgresql_password             = var.postgresql_password
   postgresql_replication_password = var.postgresql_replication_password
-  postgresql_replication_user     = "replicator"    # optional
-  synchronous_standby_names       = "pg-replica-01" # optional
-  synchronous_commit              = "on"            # optional
+  postgresql_replication_user     = "replicator" # optional
+  synchronous_standby_names       = "pg-02"      # optional
+  synchronous_commit              = "on"         # optional
 
   primary = {
-    server_name   = "pg-primary"
+    server_name   = "pg-01"
     provider_name = "hetzner"
     datacenter    = "fsn1"
-    server_type   = "SMALL-1C-2G"
+    server_type   = "SMALL-2C-2G"
   }
 
   replicas = [
     {
-      server_name   = "pg-replica-01"
+      server_name   = "pg-02"
       provider_name = "hetzner"
       datacenter    = "fsn1"
-      server_type   = "SMALL-1C-2G"
+      server_type   = "SMALL-2C-2G"
     },
     {
-      server_name   = "pg-replica-02"
-      provider_name = "hetzner"
-      datacenter    = "fsn1"
-      server_type   = "SMALL-1C-2G"
+      server_name   = "pg-03"
+      provider_name = "scaleway"
+      datacenter    = "fr-par-1"
+      server_type   = "SMALL-2C-2G"
     }
   ]
 }
