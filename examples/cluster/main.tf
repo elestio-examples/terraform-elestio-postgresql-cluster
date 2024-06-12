@@ -53,25 +53,26 @@ module "cluster" {
   synchronous_standby_names       = "pg-02"      # optional
   synchronous_commit              = "on"         # optional
 
-  primary = {
-    server_name   = "pg-01"
-    provider_name = "hetzner"
-    datacenter    = "fsn1"
-    server_type   = "SMALL-2C-2G"
-  }
-
-  replicas = [
-    {
-      server_name   = "pg-02"
+  nodes = {
+    primary = {
+      server_name   = "pg-01"
       provider_name = "hetzner"
       datacenter    = "fsn1"
-      server_type   = "SMALL-2C-2G"
-    },
-    {
-      server_name   = "pg-03"
-      provider_name = "scaleway"
-      datacenter    = "fr-par-1"
-      server_type   = "SMALL-2C-2G"
+      server_type   = "SMALL-1C-2G"
     }
-  ]
+    replicas = [
+      {
+        server_name   = "pg-02"
+        provider_name = "hetzner"
+        datacenter    = "fsn1"
+        server_type   = "SMALL-1C-2G"
+      },
+      {
+        server_name   = "pg-03"
+        provider_name = "scaleway"
+        datacenter    = "fr-par-1"
+        server_type   = "SMALL-2C-2G"
+      }
+    ]
+  }
 }

@@ -1,5 +1,5 @@
 resource "elestio_postgresql" "cluster_nodes" {
-  for_each = { for config in concat([var.primary], var.replicas) : config.server_name => config }
+  for_each = { for config in concat([var.nodes.primary], var.nodes.replicas) : config.server_name => config }
 
   project_id       = var.project_id
   version          = var.postgresql_version
@@ -51,8 +51,8 @@ resource "elestio_postgresql" "cluster_nodes" {
 }
 
 locals {
-  primary_node   = elestio_postgresql.cluster_nodes[var.primary.server_name]
-  replicas_nodes = { for node in [for cluster_node in elestio_postgresql.cluster_nodes : cluster_node if cluster_node.server_name != var.primary.server_name] : node.server_name => node }
+  primary_node   = elestio_postgresql.cluster_nodes[var.nodes.primary.server_name]
+  replicas_nodes = { for node in [for cluster_node in elestio_postgresql.cluster_nodes : cluster_node if cluster_node.server_name != var.nodes.primary.server_name] : node.server_name => node }
 }
 
 # The primary can either be on a new node, or a replica to be promoted.
@@ -62,6 +62,7 @@ resource "terraform_data" "primary_configuration" {
     cluster_name              = replace(local.primary_node.server_name, "-", "_")
     synchronous_standby_names = replace(var.synchronous_standby_names, "-", "_")
     synchronous_commit        = var.synchronous_commit
+    postgresql_password       = var.postgresql_password
   }
 
   connection {
@@ -84,6 +85,7 @@ resource "terraform_data" "primary_configuration" {
   provisioner "remote-exec" {
     inline = [
       "cd /opt/app",
+      "scripts/updateEnv.sh SOFTWARE_PASSWORD ${self.triggers_replace.postgresql_password}",
       "scripts/updateEnv.sh CLUSTER_NAME ${self.triggers_replace.cluster_name}",
       "scripts/updateEnv.sh SYNCHRONOUS_STANDBY_NAMES '\"${self.triggers_replace.synchronous_standby_names}\"'",
       "scripts/updateEnv.sh SYNCHRONOUS_COMMIT ${self.triggers_replace.synchronous_commit}",
@@ -120,6 +122,7 @@ resource "terraform_data" "replicas_configuration" {
   for_each = local.replicas_nodes
 
   triggers_replace = {
+    postgresql_password   = var.postgresql_password
     primary_configuration = terraform_data.primary_configuration.id
     primary_host          = local.primary_node.global_ip
     cluster_name          = replace(each.value.server_name, "-", "_")
@@ -161,6 +164,7 @@ resource "terraform_data" "replicas_configuration" {
   provisioner "remote-exec" {
     inline = [
       "cd /opt/app",
+      "scripts/updateEnv.sh SOFTWARE_PASSWORD ${self.triggers_replace.postgresql_password}",
       "scripts/updateEnv.sh CLUSTER_NAME ${self.triggers_replace.cluster_name}",
       "scripts/updateEnv.sh PRIMARY_HOST ${self.triggers_replace.primary_host}",
       "scripts/updateEnv.sh REPLICATION_SLOT_NAME ${self.triggers_replace.replication_slot_name}",
