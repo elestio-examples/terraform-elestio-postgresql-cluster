@@ -14,9 +14,10 @@ services:
       -c cluster_name=${CLUSTER_NAME}
       -c synchronous_standby_names="${SYNCHRONOUS_STANDBY_NAMES}"
       -c synchronous_commit=${SYNCHRONOUS_COMMIT}
-    # -c ssl=on
-    # -c ssl_cert_file=/var/lib/postgresql/data/server.crt
-    # -c ssl_key_file=/var/lib/postgresql/data/server.key
+      -c ssl=on
+      -c ssl_cert_file=/var/lib/postgresql/data/server.crt
+      -c ssl_key_file=/var/lib/postgresql/data/server.key
+      -c ssl_ca_file=/var/lib/postgresql/data/ca.crt
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres

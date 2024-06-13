@@ -50,6 +50,54 @@ resource "elestio_postgresql" "cluster_nodes" {
   }
 }
 
+resource "terraform_data" "ssl_certificates" {
+  for_each = elestio_postgresql.cluster_nodes
+
+  triggers_replace = {
+    ca_key = var.ssl_ca_key
+  }
+
+  connection {
+    type        = "ssh"
+    host        = each.value.ipv4
+    private_key = var.configuration_ssh_key.private_key
+  }
+
+  provisioner "file" {
+    content     = self.triggers_replace.ca_key
+    destination = "/opt/app/new_ca.key"
+  }
+
+  provisioner "remote-exec" {
+    # Generate the certificates with the CA private key.
+    # If there was existing certificates, but our CA key changed, then we need to regenerate the certificates.
+    inline = [
+      <<-EOF
+      cd /opt/app
+        if [[ ! -f "ca.key" || ! cmp -s "ca.key" "new_ca.key" ]]; then
+        docker-compose down
+        echo "Generating new certificates."
+
+        mv new_ca.key ca.key
+        openssl req -x509 -new -nodes -key ca.key -sha256 -days 3650 -out ca.crt -subj "/CN=Elestio PostgreSQL CA"
+
+        openssl genrsa -out server.key 4096
+        openssl req -new -key server.key -out server.csr -subj "/CN=${each.value.cname}"  # This line generates server.csr
+        openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 3650 -sha256
+
+        chown 1001:1001 ca.crt server.crt server.key
+        chmod 600 ca.crt server.crt server.key
+        mv ca.crt server.crt server.key data/
+
+        rm server.csr
+      else
+        echo "The CA key is the same. Skipping the certificate generation."
+      fi
+      EOF
+    ]
+  }
+}
+
 locals {
   primary_node   = elestio_postgresql.cluster_nodes[var.nodes.primary.server_name]
   replicas_nodes = { for node in [for cluster_node in elestio_postgresql.cluster_nodes : cluster_node if cluster_node.server_name != var.nodes.primary.server_name] : node.server_name => node }
@@ -59,6 +107,7 @@ locals {
 resource "terraform_data" "primary_configuration" {
   triggers_replace = {
     primary_node_id           = local.primary_node.id
+    ssl_certificates          = terraform_data.ssl_certificates[local.primary_node.server_name].id
     cluster_name              = replace(local.primary_node.server_name, "-", "_")
     synchronous_standby_names = replace(var.synchronous_standby_names, "-", "_")
     synchronous_commit        = var.synchronous_commit
@@ -122,6 +171,7 @@ resource "terraform_data" "replicas_configuration" {
   for_each = local.replicas_nodes
 
   triggers_replace = {
+    ssl_certificates      = terraform_data.ssl_certificates[each.key].id
     postgresql_password   = var.postgresql_password
     primary_configuration = terraform_data.primary_configuration.id
     primary_host          = local.primary_node.global_ip

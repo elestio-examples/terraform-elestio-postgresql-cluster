@@ -15,7 +15,7 @@ services:
         sleep 1s
         done
         echo 'Backup done, starting replica...'
-        exec postgres -c cluster_name=${CLUSTER_NAME}
+        exec postgres -c cluster_name=${CLUSTER_NAME} -c ssl_cert_file=/var/lib/postgresql/data/server.crt -c ssl_key_file=/var/lib/postgresql/data/server.key -c ssl_ca_file=/var/lib/postgresql/data/ca.crt
       "
     # postgres -c ssl=on -c ssl_cert_file=/var/lib/postgresql/data/server.crt -c ssl_key_file=/var/lib/postgresql/data/server.key
     environment:

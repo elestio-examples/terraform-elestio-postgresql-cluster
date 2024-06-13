@@ -124,6 +124,20 @@ variable "configuration_ssh_key" {
   nullable = false
 }
 
+variable "ssl_ca_key" {
+  description = <<-EOF
+  The ca.key is the private key for the Certificate Authority (CA) that will be used to sign the server certificates for your PostgreSQL cluster.
+  Make sure to include it in your `.gitignore` file to avoid committing it to your repository.
+  Generate a new private key using the following command:
+  ```sh
+  openssl genpkey -algorithm RSA -out ca.key
+  ```
+  EOF
+  sensitive   = true
+  type        = string
+  nullable    = false
+}
+
 variable "synchronous_standby_names" {
   description = "Specifies the list of replicas that support synchronous replication."
   type        = string

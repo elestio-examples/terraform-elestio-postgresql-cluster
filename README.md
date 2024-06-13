@@ -4,7 +4,7 @@
 - [x] replica can be async or sync
 - [x] failover
 - [x] able to update postgresql_password, replication_user and replication_password
-- [ ] ssl
+- [x] ssl
 - [ ] documentation
 
 ## Postgres root password

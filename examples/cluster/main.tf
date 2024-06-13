@@ -42,7 +42,8 @@ module "cluster" {
   project_id = elestio_project.project.id
 
   configuration_ssh_key = {
-    username    = "terraform"
+    username = "terraform"
+    # Generate command: "ssh-keygen -t rsa -f terraform_rsa"
     public_key  = chomp(file("./terraform_rsa.pub"))
     private_key = file("./terraform_rsa")
   }
@@ -52,6 +53,9 @@ module "cluster" {
   postgresql_replication_user     = "replicator" # optional
   synchronous_standby_names       = "pg-02"      # optional
   synchronous_commit              = "on"         # optional
+
+  # Generate command: "openssl genrsa -out ca.key 4096"
+  ssl_ca_key = file("./ca.key")
 
   nodes = {
     primary = {
