@@ -51,7 +51,7 @@ module "cluster" {
   postgresql_password             = var.postgresql_password
   postgresql_replication_password = var.postgresql_replication_password
   postgresql_replication_user     = "replicator" # optional
-  synchronous_standby_names       = "pg-02"      # optional
+  synchronous_standby_names       = ""           # optional
   synchronous_commit              = "on"         # optional
 
   # Generate command: "openssl genrsa -out ca.key 4096"
@@ -59,24 +59,40 @@ module "cluster" {
 
   nodes = {
     primary = {
-      server_name   = "pg-01"
+      server_name   = "postgres-01"
       provider_name = "hetzner"
       datacenter    = "fsn1"
       server_type   = "SMALL-1C-2G"
     }
     replicas = [
       {
-        server_name   = "pg-02"
+        server_name   = "postgres-02"
         provider_name = "hetzner"
-        datacenter    = "fsn1"
+        datacenter    = "hel1"
         server_type   = "SMALL-1C-2G"
       },
       {
-        server_name   = "pg-03"
+        server_name   = "postgres-03"
         provider_name = "scaleway"
         datacenter    = "fr-par-1"
         server_type   = "SMALL-2C-2G"
       }
     ]
+  }
+}
+
+output "nodes_admins" {
+  sensitive = true
+  value = {
+    primary = {
+      database = module.cluster.nodes.primary.database_admin
+      pgadmin  = module.cluster.nodes.primary.admin
+    }
+    replicas = {
+      for node in module.cluster.nodes.replicas : node.server_name => {
+        database = node.database_admin
+        pgadmin  = node.admin
+      }
+    }
   }
 }

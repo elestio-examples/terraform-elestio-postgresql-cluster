@@ -9,7 +9,7 @@ services:
       bash -c "
         rm -rf /var/lib/postgresql/data/pgdata/*
         echo 'Starting pg_basebackup...'
-        until pg_basebackup --pgdata=/var/lib/postgresql/data/pgdata -R --slot=${REPLICATION_SLOT_NAME} --host=${PRIMARY_HOST} --port=5432
+        until pg_basebackup --pgdata=/var/lib/postgresql/data/pgdata -R --slot=${REPLICATION_SLOT_NAME} --host=${PRIMARY_HOST} --port=5433
         do
         echo 'Waiting for primary to connect...'
         sleep 1s
@@ -26,7 +26,8 @@ services:
     volumes:
       - ./data:/var/lib/postgresql/data
     ports:
-      - 5432:5432
+      - 172.17.0.1:5432:5432
+      - ${NEBULA_IP}:5433:5432
 
   pgadmin:
     image: elestio/pgadmin:latest

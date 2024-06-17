@@ -30,7 +30,8 @@ services:
       - ./data:/var/lib/postgresql/data
       - ./00_init.sql:/docker-entrypoint-initdb.d/00_init.sql
     ports:
-      - 5432:5432
+      - 172.17.0.1:5432:5432
+      - ${NEBULA_IP}:5433:5432
 
   pgadmin:
     image: elestio/pgadmin:latest

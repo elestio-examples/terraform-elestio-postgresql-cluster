@@ -107,6 +107,7 @@ locals {
 resource "terraform_data" "primary_configuration" {
   triggers_replace = {
     primary_node_id           = local.primary_node.id
+    nebula_ip                 = local.primary_node.global_ip
     ssl_certificates          = terraform_data.ssl_certificates[local.primary_node.server_name].id
     cluster_name              = replace(local.primary_node.server_name, "-", "_")
     synchronous_standby_names = replace(var.synchronous_standby_names, "-", "_")
@@ -134,6 +135,7 @@ resource "terraform_data" "primary_configuration" {
   provisioner "remote-exec" {
     inline = [
       "cd /opt/app",
+      "scripts/updateEnv.sh NEBULA_IP ${self.triggers_replace.nebula_ip}",
       "scripts/updateEnv.sh SOFTWARE_PASSWORD ${self.triggers_replace.postgresql_password}",
       "scripts/updateEnv.sh CLUSTER_NAME ${self.triggers_replace.cluster_name}",
       "scripts/updateEnv.sh SYNCHRONOUS_STANDBY_NAMES '\"${self.triggers_replace.synchronous_standby_names}\"'",
@@ -175,6 +177,7 @@ resource "terraform_data" "replicas_configuration" {
     postgresql_password   = var.postgresql_password
     primary_configuration = terraform_data.primary_configuration.id
     primary_host          = local.primary_node.global_ip
+    nebula_ip             = each.value.global_ip
     cluster_name          = replace(each.value.server_name, "-", "_")
     replication_slot_name = "${replace(each.value.server_name, "-", "_")}_slot"
     replication_user      = var.postgresql_replication_user
@@ -215,6 +218,7 @@ resource "terraform_data" "replicas_configuration" {
     inline = [
       "cd /opt/app",
       "scripts/updateEnv.sh SOFTWARE_PASSWORD ${self.triggers_replace.postgresql_password}",
+      "scripts/updateEnv.sh NEBULA_IP ${self.triggers_replace.nebula_ip}",
       "scripts/updateEnv.sh CLUSTER_NAME ${self.triggers_replace.cluster_name}",
       "scripts/updateEnv.sh PRIMARY_HOST ${self.triggers_replace.primary_host}",
       "scripts/updateEnv.sh REPLICATION_SLOT_NAME ${self.triggers_replace.replication_slot_name}",

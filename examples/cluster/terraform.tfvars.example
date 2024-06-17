@@ -1,0 +1,7 @@
+# Generate your Elestio API token: https://dash.elest.io/account/security
+elestio_email     = "john@doe.com"
+elestio_api_token = ""
+
+# If you need, you can generate a safe new random password on this Elestio URL: https://api.elest.io/api/auth/passwordgenerator
+postgresql_password             = ""
+postgresql_replication_password = ""
