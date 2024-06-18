@@ -22,7 +22,7 @@ terraform {
   required_providers {
     elestio = {
       source  = "elestio/elestio"
-      version = ">= 0.18.0"
+      version = ">= 0.19.0"
     }
   }
 }
@@ -37,7 +37,7 @@ resource "elestio_project" "project" {
 }
 
 module "cluster" {
-  source = "../.."
+  source = "elestio-examples/postgresql-cluster/elestio"
 
   project_id = elestio_project.project.id
 

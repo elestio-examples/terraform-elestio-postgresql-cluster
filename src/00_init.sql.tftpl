@@ -4,7 +4,7 @@ BEGIN;
 -- Set synchronous commit to off for this transaction
 SET LOCAL synchronous_commit TO OFF;
 
-CREATE USER ${replication_user} WITH REPLICATION ENCRYPTED PASSWORD '${replication_password}';
+CREATE USER "${replication_user}" WITH REPLICATION ENCRYPTED PASSWORD '${replication_password}';
 
 CREATE OR REPLACE FUNCTION create_physical_replication_slot_if_not_exists(p_slot_name text)
 RETURNS void AS $$

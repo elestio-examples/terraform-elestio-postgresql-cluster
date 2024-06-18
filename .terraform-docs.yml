@@ -40,7 +40,7 @@ content: |-
   Replicas are read-only and replicate the primary node's data.
   Replication can be synchronous or asynchronous for each replica individually.
 
-  <img src="documentation/architecture.png" alt="architecture" style="max-width: 600px" />
+  <img src="https://raw.githubusercontent.com/elestio-examples/terraform-elestio-postgresql-cluster/main/documentation/architecture.png" alt="architecture" style="max-width: 600px" />
 
   ## Requirements
 
@@ -61,6 +61,14 @@ content: |-
   ```hcl
   {{ include "documentation/usage.tf" }}
   ```
+
+  Do not commit your API token, PostgreSQL password, SSH key...
+
+  If you want to know all configuration attributes, check the [PostgreSQL service documentation](https://registry.terraform.io/providers/elestio/elestio/latest/docs/resources/postgresql). E.g. you can disable the service firewall with `firewall_enabled = false`.
+
+  You can choose your provider, datacenter, and server type. Look this guide [Providers, Datacenters and Server Types](https://registry.terraform.io/providers/elestio/elestio/latest/docs/guides/providers_datacenters_server_types) to know about the available options.
+
+  If you add more nodes, you may attains the resources limit of your account, please visit your account [quota page](https://dash.elest.io/account/add-quota) to ask for more resources.
 
   ## Getting Started
 
@@ -137,7 +145,7 @@ content: |-
 
   - The root user is by default `postgres` and the replication user is by default `replicator`.
 
-  - The `synchronous_standby_names` variable is used to set which replicas are synchronous, and their priority. By default and if empty or not set, all replicas are asynchronous. In this example, the `postgres-02` replica is synchronous.
+  - The `synchronous_standby_names` variable is used to set which replicas are synchronous, and their priority. By default and if empty or not set, all replicas are asynchronous.
 
   - A node is identified by its `server_name` value. If you update the `server_name` value of a node, it will be considered as a new node to create, and destroy the old one.
   Be carefull, If you update the `server_name` primary value without precautions, the module will clear the data of all the nodes and create a new cluster.
@@ -305,7 +313,7 @@ content: |-
   Before updating the configuration, connect to the primary node and execute the following sql command:
 
   ```sql
-  ALTER USER postgres WITH ENCRYPTED PASSWORD 'new_password';
+  ALTER USER "postgres" WITH ENCRYPTED PASSWORD "new_password";
   ```
 
   The change will be effective immediately and replicated among the cluster.
@@ -320,7 +328,7 @@ content: |-
   For example, to change the replication user from `replicator` to `replicator2`, execute the following sql command on the primary node:
 
   ```sql
-  ALTER USER replicator RENAME TO replicator2;
+  ALTER USER "replicator" RENAME TO "replicator2";
   ```
 
   Then update the `postgresql_replication_user` variable in the `main.tf` file and apply terraform.
@@ -330,7 +338,7 @@ content: |-
   Execute the following sql command on the primary node:
 
   ```sql
-  ALTER USER replicator2 WITH ENCRYPTED PASSWORD 'new_password';
+  ALTER USER "replicator" WITH ENCRYPTED PASSWORD "new_password";
   ```
 
   Then update the `postgresql_replication_password` variable in the `terraform.tfvars` file and apply terraform.
@@ -413,6 +421,8 @@ content: |-
   ```
 
   And voilà! The `postgres-03` node is now the primary node and the `postgres-01` node is now a replica.
+
+  Do not forget to use the hostname of the new primary node to connect to the database for write operations.
 
   -> Watch for typo misstakes!! If you replace primary value with a new server_name that has never been deployed before (like `postgres-04`), the module will clear the data of all the nodes and create a new cluster.
 

@@ -18,7 +18,7 @@ Primary node accepts write and read operations.
 Replicas are read-only and replicate the primary node's data.
 Replication can be synchronous or asynchronous for each replica individually.
 
-<img src="documentation/architecture.png" alt="architecture" style="max-width: 600px" />
+<img src="https://raw.githubusercontent.com/elestio-examples/terraform-elestio-postgresql-cluster/main/documentation/architecture.png" alt="architecture" style="max-width: 600px" />
 
 ## Requirements
 
@@ -81,6 +81,14 @@ module "cluster" {
 }
 ```
 
+Do not commit your API token, PostgreSQL password, SSH key...
+
+If you want to know all configuration attributes, check the [PostgreSQL service documentation](https://registry.terraform.io/providers/elestio/elestio/latest/docs/resources/postgresql). E.g. you can disable the service firewall with `firewall_enabled = false`.
+
+You can choose your provider, datacenter, and server type. Look this guide [Providers, Datacenters and Server Types](https://registry.terraform.io/providers/elestio/elestio/latest/docs/guides/providers_datacenters_server_types) to know about the available options.
+
+If you add more nodes, you may attains the resources limit of your account, please visit your account [quota page](https://dash.elest.io/account/add-quota) to ask for more resources.
+
 ## Getting Started
 
 In this example, we will deploy a PostgreSQL cluster with two asynchronous replicas.
@@ -135,7 +143,7 @@ terraform {
   required_providers {
     elestio = {
       source  = "elestio/elestio"
-      version = ">= 0.18.0"
+      version = ">= 0.19.0"
     }
   }
 }
@@ -150,7 +158,7 @@ resource "elestio_project" "project" {
 }
 
 module "cluster" {
-  source = "../.."
+  source = "elestio-examples/postgresql-cluster/elestio"
 
   project_id = elestio_project.project.id
 
@@ -294,7 +302,7 @@ In the `main.tf` file, you can see the module's configuration.
 
 - The root user is by default `postgres` and the replication user is by default `replicator`.
 
-- The `synchronous_standby_names` variable is used to set which replicas are synchronous, and their priority. By default and if empty or not set, all replicas are asynchronous. In this example, the `postgres-02` replica is synchronous.
+- The `synchronous_standby_names` variable is used to set which replicas are synchronous, and their priority. By default and if empty or not set, all replicas are asynchronous.
 
 - A node is identified by its `server_name` value. If you update the `server_name` value of a node, it will be considered as a new node to create, and destroy the old one.
 Be carefull, If you update the `server_name` primary value without precautions, the module will clear the data of all the nodes and create a new cluster.
@@ -462,7 +470,7 @@ But for others, you must connect to the primary node and execute a command befor
 Before updating the configuration, connect to the primary node and execute the following sql command:
 
 ```sql
-ALTER USER postgres WITH ENCRYPTED PASSWORD 'new_password';
+ALTER USER "postgres" WITH ENCRYPTED PASSWORD "new_password";
 ```
 
 The change will be effective immediately and replicated among the cluster.
@@ -477,7 +485,7 @@ Same as the root password, you can change the replication user at any time but y
 For example, to change the replication user from `replicator` to `replicator2`, execute the following sql command on the primary node:
 
 ```sql
-ALTER USER replicator RENAME TO replicator2;
+ALTER USER "replicator" RENAME TO "replicator2";
 ```
 
 Then update the `postgresql_replication_user` variable in the `main.tf` file and apply terraform.
@@ -487,7 +495,7 @@ Then update the `postgresql_replication_user` variable in the `main.tf` file and
 Execute the following sql command on the primary node:
 
 ```sql
-ALTER USER replicator2 WITH ENCRYPTED PASSWORD 'new_password';
+ALTER USER "replicator" WITH ENCRYPTED PASSWORD "new_password";
 ```
 
 Then update the `postgresql_replication_password` variable in the `terraform.tfvars` file and apply terraform.
@@ -571,6 +579,8 @@ terraform apply
 
 And voilà! The `postgres-03` node is now the primary node and the `postgres-01` node is now a replica.
 
+Do not forget to use the hostname of the new primary node to connect to the database for write operations.
+
 -> Watch for typo misstakes!! If you replace primary value with a new server_name that has never been deployed before (like `postgres-04`), the module will clear the data of all the nodes and create a new cluster.
 
 ## Inside the Module
@@ -594,16 +604,16 @@ We are always happy to help you with any questions you may have.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_configuration_ssh_key"></a> [configuration\_ssh\_key](#input\_configuration\_ssh\_key) | n/a | <pre>object({<br>    username    = string<br>    public_key  = string<br>    private_key = string<br>  })</pre> | n/a | yes |
-| <a name="input_nodes"></a> [nodes](#input\_nodes) | Primary and replicas nodes configuration. | <pre>object({<br>    primary = object({<br>      server_name                                       = string<br>      provider_name                                     = string<br>      datacenter                                        = string<br>      server_type                                       = string<br>      admin_email                                       = optional(string)<br>      alerts_enabled                                    = optional(bool)<br>      app_auto_update_enabled                           = optional(bool)<br>      backups_enabled                                   = optional(bool)<br>      firewall_enabled                                  = optional(bool)<br>      keep_backups_on_delete_enabled                    = optional(bool)<br>      remote_backups_enabled                            = optional(bool)<br>      support_level                                     = optional(string)<br>      system_auto_updates_security_patches_only_enabled = optional(bool)<br>      ssh_public_keys = optional(list(object({<br>        username = string<br>        key_data = string<br>        })<br>      ), [])<br>    })<br>    replicas = optional(list(object({<br>      server_name                                       = string<br>      provider_name                                     = string<br>      datacenter                                        = string<br>      server_type                                       = string<br>      admin_email                                       = optional(string)<br>      alerts_enabled                                    = optional(bool)<br>      app_auto_update_enabled                           = optional(bool)<br>      backups_enabled                                   = optional(bool)<br>      firewall_enabled                                  = optional(bool)<br>      keep_backups_on_delete_enabled                    = optional(bool)<br>      remote_backups_enabled                            = optional(bool)<br>      support_level                                     = optional(string)<br>      system_auto_updates_security_patches_only_enabled = optional(bool)<br>      ssh_public_keys = optional(list(object({<br>        username = string<br>        key_data = string<br>        })<br>      ), [])<br>    })), [])<br>  })</pre> | n/a | yes |
-| <a name="input_postgresql_password"></a> [postgresql\_password](#input\_postgresql\_password) | The password for the default `postgres` superuser.<br>You can change this password after the first deployment, but you must manually execute this SQL command on the primary node before:<pre>sql<br>ALTER USER postgres WITH ENCRYPTED PASSWORD 'new_password';</pre>Then you can run the `terraform apply` command so the configuration will be updated with the new password. | `string` | n/a | yes |
-| <a name="input_postgresql_replication_password"></a> [postgresql\_replication\_password](#input\_postgresql\_replication\_password) | The password for the replication user.<br>You can change the replication password after the first deployment, but you must manually execute this SQL command on the primary node before:<pre>sql<br>ALTER USER replicator WITH ENCRYPTED PASSWORD 'new_password';</pre>After executing this command, you can safely update this variable value and run the `terraform apply` command so the configuration will be updated with the new password. | `string` | n/a | yes |
-| <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The Elestio project ID that will contain your nodes.<br>You can create a new Elestio project using the terraform ressource `elestio_project`. | `string` | n/a | yes |
-| <a name="input_ssl_ca_key"></a> [ssl\_ca\_key](#input\_ssl\_ca\_key) | The ca.key is the private key for the Certificate Authority (CA) that will be used to sign the server certificates for your PostgreSQL cluster.<br>Make sure to include it in your `.gitignore` file to avoid committing it to your repository.<br>Generate a new private key using the following command:<pre>sh<br>openssl genpkey -algorithm RSA -out ca.key</pre> | `string` | n/a | yes |
-| <a name="input_postgresql_replication_user"></a> [postgresql\_replication\_user](#input\_postgresql\_replication\_user) | The username for the replication user (default is `replicator`).<br>You can change the username after the first deployment, but you must manually execute this SQL command on the primary node before:<pre>sql<br>ALTER USER replicator RENAME TO new_username;</pre>After executing this command, you can safely update this variable value and run the `terraform apply` command so the configuration will be updated with the new username. | `string` | `"replicator"` | no |
-| <a name="input_postgresql_version"></a> [postgresql\_version](#input\_postgresql\_version) | The tag version of PostgreSQL image to install on the nodes.<br>The docker image used is `elestio/postgresql:<version>`.<br>The default value is the recommended version.<br>You can find the available versions on the Docker Hub page: https://hub.docker.com/r/elestio/postgres/tags | `string` | `null` | no |
-| <a name="input_synchronous_commit"></a> [synchronous\_commit](#input\_synchronous\_commit) | Specifies how much WAL processing must complete before the database server returns a success indication to the client. Valid values are `on` (the default), `off`, `local`, `remote_apply`, and `remote_write`. | `string` | `"on"` | no |
-| <a name="input_synchronous_standby_names"></a> [synchronous\_standby\_names](#input\_synchronous\_standby\_names) | Specifies the list of replicas that support synchronous replication. | `string` | `""` | no |
+| <a name="input_configuration_ssh_key"></a> [configuration\_ssh\_key](#input\_configuration\_ssh\_key) | The module will use a local SSH key on your machine to connect to the nodes and configure the PostgreSQL cluster.<br>Make sure to include the private key in your `.gitignore` file to avoid committing it to your repository.<br><br>Generate a new SSH key using the following command:<pre>ssh-keygen -t rsa -f terraform_rsa"</pre> | <pre>object({<br>    username    = string<br>    public_key  = string<br>    private_key = string<br>  })</pre> | n/a | yes |
+| <a name="input_nodes"></a> [nodes](#input\_nodes) | The primary and replica nodes configuration. The primary node is mandatory, and you can configure as many replicas as you want. Be aware of your account resources limits.<br><br>Check the `elestio_postgresql` [ressource documentation](https://registry.terraform.io/providers/elestio/elestio/latest/docs/resources/postgresql) for more information about available attributes. | <pre>object({<br>    primary = object({<br>      server_name                                       = string<br>      provider_name                                     = string<br>      datacenter                                        = string<br>      server_type                                       = string<br>      admin_email                                       = optional(string)<br>      alerts_enabled                                    = optional(bool)<br>      app_auto_update_enabled                           = optional(bool)<br>      backups_enabled                                   = optional(bool)<br>      firewall_enabled                                  = optional(bool)<br>      keep_backups_on_delete_enabled                    = optional(bool)<br>      remote_backups_enabled                            = optional(bool)<br>      support_level                                     = optional(string)<br>      system_auto_updates_security_patches_only_enabled = optional(bool)<br>      ssh_public_keys = optional(list(object({<br>        username = string<br>        key_data = string<br>        })<br>      ), [])<br>    })<br>    replicas = optional(list(object({<br>      server_name                                       = string<br>      provider_name                                     = string<br>      datacenter                                        = string<br>      server_type                                       = string<br>      admin_email                                       = optional(string)<br>      alerts_enabled                                    = optional(bool)<br>      app_auto_update_enabled                           = optional(bool)<br>      backups_enabled                                   = optional(bool)<br>      firewall_enabled                                  = optional(bool)<br>      keep_backups_on_delete_enabled                    = optional(bool)<br>      remote_backups_enabled                            = optional(bool)<br>      support_level                                     = optional(string)<br>      system_auto_updates_security_patches_only_enabled = optional(bool)<br>      ssh_public_keys = optional(list(object({<br>        username = string<br>        key_data = string<br>        })<br>      ), [])<br>    })), [])<br>  })</pre> | n/a | yes |
+| <a name="input_postgresql_password"></a> [postgresql\_password](#input\_postgresql\_password) | The password for the root **postgres** user.<br><br>You can change this password after the first deployment, but you must manually execute this SQL command on the primary node before:<pre>ALTER USER "postgres" WITH ENCRYPTED PASSWORD "new_password";</pre>Then you can run the `terraform apply` command so the configuration will be updated with the new password. | `string` | n/a | yes |
+| <a name="input_postgresql_replication_password"></a> [postgresql\_replication\_password](#input\_postgresql\_replication\_password) | The password of the replication user.<br><br>You can change the replication password after the first deployment, but you must manually execute this SQL command on the primary node before:<pre>ALTER USER "replicator" WITH ENCRYPTED PASSWORD "new_password";</pre>After executing this command, you can safely update this variable value and run the `terraform apply` command so the configuration will be updated with the new password. | `string` | n/a | yes |
+| <a name="input_project_id"></a> [project\_id](#input\_project\_id) | The Elestio project ID that will contain your nodes.<br>Create a new Elestio project using the [terraform ressource](https://registry.terraform.io/providers/elestio/elestio/latest/docs/resources/project) `elestio_project` and get the ID from the output. | `string` | n/a | yes |
+| <a name="input_ssl_ca_key"></a> [ssl\_ca\_key](#input\_ssl\_ca\_key) | The ca.key is the private key for the Certificate Authority (CA) that will be used to sign the server certificates for your PostgreSQL cluster.<br>Make sure to include it in your `.gitignore` file to avoid committing it to your repository.<br><br>Generate a new private key using the following command:<pre>openssl genpkey -algorithm RSA -out ca.key</pre> | `string` | n/a | yes |
+| <a name="input_postgresql_replication_user"></a> [postgresql\_replication\_user](#input\_postgresql\_replication\_user) | The username for the replication user.<br>Default value is `replicator`.<br><br>You can change the username after the first deployment, but you must manually execute this SQL command on the primary node before:<pre>ALTER USER "replicator" RENAME TO "new_username";</pre>After executing this command, you can safely update this variable value and run the `terraform apply` command so the configuration will be updated with the new username. | `string` | `"replicator"` | no |
+| <a name="input_postgresql_version"></a> [postgresql\_version](#input\_postgresql\_version) | The tag version of PostgreSQL image to install on the nodes.<br>The default value is the recommended version.<br>The docker image used is `elestio/postgresql:<version>`.<br>List of available versions on the [Docker Hub page](https://hub.docker.com/r/elestio/postgres/tags). | `string` | `null` | no |
+| <a name="input_synchronous_commit"></a> [synchronous\_commit](#input\_synchronous\_commit) | Specifies how much WAL processing must complete before the database server returns a success indication to the client.<br>Valid values are `on` (the default), `off`, `local`, `remote_apply`, and `remote_write`.<br><br>Check the [PostgreSQL documentation](https://www.postgresql.org/docs/current/runtime-config-wal.html#GUC-SYNCHRONOUS-COMMIT) for more information. | `string` | `"on"` | no |
+| <a name="input_synchronous_standby_names"></a> [synchronous\_standby\_names](#input\_synchronous\_standby\_names) | Specifies the replicas running in synchronous mode.<br><br>Check the [PostgreSQL documentation](https://www.postgresql.org/docs/current/runtime-config-replication.html#GUC-SYNCHRONOUS-STANDBY-NAMES) for more information. | `string` | `""` | no |
 ## Modules
 
 No modules.
@@ -616,14 +626,14 @@ No modules.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_elestio"></a> [elestio](#provider\_elestio) | >= 0.18.0 |
+| <a name="provider_elestio"></a> [elestio](#provider\_elestio) | >= 0.19.0 |
 | <a name="provider_terraform"></a> [terraform](#provider\_terraform) | n/a |
 ## Requirements
 
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_elestio"></a> [elestio](#requirement\_elestio) | >= 0.18.0 |
+| <a name="requirement_elestio"></a> [elestio](#requirement\_elestio) | >= 0.19.0 |
 ## Resources
 
 | Name | Type |
